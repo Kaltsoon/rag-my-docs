@@ -1,0 +1,39 @@
+{
+  "name": "rag-my-docs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "npx tsnd --respawn ./src/index.ts",
+    "start": "node ./dist/index.js",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@langchain/community": "^0.3.49",
+    "@langchain/core": "^0.3.66",
+    "@langchain/ollama": "^0.2.3",
+    "@langchain/redis": "^0.1.1",
+    "adm-zip": "^0.5.16",
+    "glob": "^11.0.3",
+    "inquirer": "^12.8.2",
+    "langchain": "^0.3.30",
+    "lru-cache": "^11.1.0",
+    "object-hash": "^3.0.0",
+    "octokit": "^5.0.3",
+    "ora": "^8.2.0",
+    "pg": "^8.16.3",
+    "redis": "^5.6.0",
+    "ts-node-dev": "^2.0.0",
+    "uuid-by-string": "^4.0.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^24.0.15",
+    "@types/object-hash": "^3.0.6",
+    "@types/pg": "^8.15.4",
+    "typescript": "^5.8.3"
+  }
+}

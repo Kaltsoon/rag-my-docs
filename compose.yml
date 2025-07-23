@@ -1,0 +1,24 @@
+services:
+  cli:
+    build:
+      context: ./
+    env_file: .env
+    container_name: rag-my-docs-cli
+  redis:
+    image: redis/redis-stack-server
+    volumes:
+      - redis_data:/data
+    container_name: rag-my-docs-redis
+  pg:
+    image: pgvector/pgvector:pg16
+    restart: always
+    environment:
+      - PGDATA=/data
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - pg_data:/data
+    container_name: rag-my-docs-postgres
+volumes:
+  redis_data:
+  ollama_data:
+  pg_data:
