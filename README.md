@@ -18,7 +18,7 @@ Docker and [Ollama](https://ollama.com/).
 4. Once the containers are ready, there's two ways to access the LLM: `http://localhost:3000/api/repos/{owner}/{repo}/prompt` REST API endpoint and the CLI application. Details for both are below.
 
 > [!WARNING]  
-> GitHub's API [limits the requests for unauthenticated users](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28). Provide a GitHub authentication token as instructed below to increate your rate limit.
+> GitHub's API [limits the requests for unauthenticated users](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28). Provide a GitHub authentication token as instructed below to increasee your rate limit if necessary.
 
 ### REST API
 
