@@ -33,8 +33,6 @@ const config = {
 
 let cachedVectorStore: PGVectorStore;
 
-logger.info("Hello world!")
-
 export async function addDocuments(documents: Document[]) {
   const vectorStore = await getVectorStore();
   await vectorStore.addDocuments(documents);
