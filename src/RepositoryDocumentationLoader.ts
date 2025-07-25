@@ -8,8 +8,13 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { Document } from "@langchain/core/documents";
 import getUuidByString from "uuid-by-string";
 
-import { DocumentationFile, RepositoryIdentifier, RepositoryIdentifierWithAuth } from "./types";
+import {
+  DocumentationFile,
+  RepositoryIdentifier,
+  RepositoryIdentifierWithAuth,
+} from "./types";
 import { getRepositoryContentZip } from "./githubApi";
+import { logger } from "./logger";
 
 const textSplitter = RecursiveCharacterTextSplitter.fromLanguage("markdown", {
   chunkSize: 2000,
@@ -32,6 +37,7 @@ export class RepositoryDocumentationLoader {
     const cacheKey = this.#getCacheKey();
 
     if (cache.has(cacheKey)) {
+      logger.info(prefixLoggerMessage(`Cache hit for key ${cacheKey}`));
       return cache.get(cacheKey)!;
     }
 
@@ -42,6 +48,12 @@ export class RepositoryDocumentationLoader {
     const documents = await getDocumentsFromRepository(
       this.#repository,
       documentationFiles
+    );
+
+    logger.info(
+      prefixLoggerMessage(
+        `Cache miss for key ${cacheKey}, ${documents.length} documents loaded`
+      )
     );
 
     cache.set(cacheKey, documents);
@@ -56,10 +68,17 @@ export class RepositoryDocumentationLoader {
   }
 }
 
-function getRepositoryFilePath(fullPath: string) {
-  const pathParts = fullPath.split(pathSeparator);
+function prefixLoggerMessage(message: string) {
+  return `Repository documentation loader: ${message}`;
+}
 
-  return pathParts.slice(3, pathParts.length).join("/");
+function getRepositoryFilePath(fullPath: string, tempFolderName: string) {
+  const pathParts = fullPath.split(pathSeparator);
+  const tempFolderIndex = pathParts.findIndex(
+    (part) => part === tempFolderName
+  );
+
+  return pathParts.slice(tempFolderIndex + 2, pathParts.length).join("/");
 }
 
 function getTempRepositoryFolderName(owner: string, repo: string) {
@@ -81,7 +100,7 @@ export async function fetchRepositoryDocumentation(
   const documentationFiles: DocumentationFile[] = [];
 
   for (const filePath of await glob(`${path}/**/*.md`)) {
-    const repositoryFilePath = getRepositoryFilePath(filePath);
+    const repositoryFilePath = getRepositoryFilePath(filePath, tempFolderName);
     const content = await readFile(filePath, "utf-8");
 
     documentationFiles.push({

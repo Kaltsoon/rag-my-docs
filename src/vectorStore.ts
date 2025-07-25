@@ -5,6 +5,7 @@ import { Document } from "@langchain/core/documents";
 import { env } from "./env";
 import { RepositoryIdentifier } from "./types";
 import { setRepositoryDocumentIds, getRepositoryDocumentIds } from "./redis";
+import { logger } from "./logger";
 
 const embeddings = new OllamaEmbeddings({
   model: env.OLLAMA_MODEL,
@@ -32,6 +33,8 @@ const config = {
 
 let cachedVectorStore: PGVectorStore;
 
+logger.info("Hello world!")
+
 export async function addDocuments(documents: Document[]) {
   const vectorStore = await getVectorStore();
   await vectorStore.addDocuments(documents);
@@ -58,20 +61,34 @@ export async function repositorySimilaritySearch(
   });
 }
 
-export async function updateRepositoryVectorStore(repository: RepositoryIdentifier, documents: Document[]) {
+export async function updateRepositoryVectorStore(
+  repository: RepositoryIdentifier,
+  documents: Document[]
+) {
   const nextDocumentIds = documents.map((doc) => doc.id!);
   const previousDocumentIds = await getRepositoryDocumentIds(repository);
 
   if (!documentIdsAreEqual(nextDocumentIds, previousDocumentIds)) {
+    logger.info(prefixLoggerMessage("Cache miss"), {
+      repository,
+      nextDocumentIds,
+      previousDocumentIds,
+    });
+
     if (previousDocumentIds.length > 0) {
+      logger.info(prefixLoggerMessage("Deleting previous documents"), {
+        repository,
+      });
       await deleteDocuments(previousDocumentIds);
     }
 
-    await Promise.all([
+    return Promise.all([
       addDocuments(documents),
       setRepositoryDocumentIds(repository, documents),
     ]);
   }
+
+  logger.info(prefixLoggerMessage("Cache hit"), { repository })
 }
 
 function documentIdsAreEqual(ids: string[], idsOther: string[]) {
@@ -86,4 +103,8 @@ async function getVectorStore() {
   cachedVectorStore = await PGVectorStore.initialize(embeddings, config);
 
   return cachedVectorStore;
+}
+
+function prefixLoggerMessage(message: string) {
+  return `Vector store: ${message}`;
 }

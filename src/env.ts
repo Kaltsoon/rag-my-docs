@@ -10,6 +10,7 @@ const EnvSchema = z.object({
   OLLAMA_URL: z.string(),
   OLLAMA_MODEL: z.string(),
   API_PORT: z.coerce.number().int(),
+  LOGGER_LEVEL: z.string().default("silent"),
 });
 
 export const env = EnvSchema.parse(process.env);

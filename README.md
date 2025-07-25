@@ -51,3 +51,7 @@ curl -X POST http://http://localhost:3000/api/repos/Kaltsoon/rag-my-docs \
 ### CLI
 
 You can run the CLI application by running `docker compose exec -it app npm run start:cli`. The CLI application will provide instructions on the usage.
+
+### Debugging
+
+Setting `LOGGER_LEVEL=debug` in the `.env` file will enable logging and provide information on, for example, cache performance.
