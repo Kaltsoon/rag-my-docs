@@ -9,6 +9,7 @@ const EnvSchema = z.object({
   REDIS_URL: z.string(),
   OLLAMA_URL: z.string(),
   OLLAMA_MODEL: z.string(),
+  API_PORT: z.coerce.number().int(),
 });
 
 export const env = EnvSchema.parse(process.env);

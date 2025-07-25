@@ -1,11 +1,11 @@
-import { Octokit } from "octokit";
-import { RepositoryIdentifier, Repository } from "./types";
+import { Octokit } from "@octokit/rest";
+import { RepositoryIdentifierWithAuth } from "./types";
 
-export interface RepositoryWithAuth extends RepositoryIdentifier {
-  auth?: string;
-}
+export type RepositoryData = Awaited<ReturnType<typeof getRepository>>
 
-export async function getRepositoryContentZip(repository: RepositoryWithAuth) {
+export async function getRepositoryContentZip(
+  repository: RepositoryIdentifierWithAuth
+) {
   const { auth, owner, repo, ref } = repository;
 
   const octokit = new Octokit({
@@ -17,20 +17,17 @@ export async function getRepositoryContentZip(repository: RepositoryWithAuth) {
     {
       owner,
       repo,
-      ref,
+      ref: ref ?? "",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
       },
-      responseType: "arraybuffer",
     }
   );
 
-  return Buffer.from(data);
+  return Buffer.from(data as ArrayBuffer);
 }
 
-export async function getRepository(
-  repository: RepositoryWithAuth
-): Promise<Repository> {
+export async function getRepository(repository: RepositoryIdentifierWithAuth) {
   const { auth, owner, repo } = repository;
 
   const octokit = new Octokit({
@@ -42,27 +39,5 @@ export async function getRepository(
     repo,
   });
 
-  const {
-    id,
-    name,
-    full_name: fullName,
-    description,
-    html_url: htmlUrl,
-    owner: ownerObject,
-    license,
-  } = data;
-
-  return {
-    id,
-    name,
-    fullName,
-    description,
-    htmlUrl,
-    owner: {
-      login: ownerObject.login,
-    },
-    license: {
-      name: license.name,
-    },
-  };
+  return data;
 }

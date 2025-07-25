@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start:dev": "npx tsnd --respawn ./src/index.ts",
-    "start": "node ./dist/index.js",
+    "start:cli:dev": "npx tsnd --respawn ./src/index.ts",
+    "start:api:dev": "npx tsnd --respawn ./src/api/server.ts",
+    "start:cli": "node ./dist/index.js",
+    "start:api": "node ./dist/api/server.js",
     "build": "tsc"
   },
   "author": "",
@@ -15,11 +17,14 @@
     "@langchain/core": "^0.3.66",
     "@langchain/ollama": "^0.2.3",
     "@langchain/redis": "^0.1.1",
+    "@octokit/rest": "^22.0.0",
     "adm-zip": "^0.5.16",
+    "express": "^5.1.0",
     "glob": "^11.0.3",
     "inquirer": "^12.8.2",
     "langchain": "^0.3.30",
     "lru-cache": "^11.1.0",
+    "morgan": "^1.10.1",
     "object-hash": "^3.0.0",
     "octokit": "^5.0.3",
     "ora": "^8.2.0",
@@ -27,10 +32,12 @@
     "redis": "^5.6.0",
     "ts-node-dev": "^2.0.0",
     "uuid-by-string": "^4.0.0",
-    "zod": "^3.25.76"
+    "zod": "^4.0.10"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
+    "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^24.0.15",
     "@types/object-hash": "^3.0.6",
     "@types/pg": "^8.15.4",

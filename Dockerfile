@@ -1,13 +1,15 @@
-FROM node:20
+FROM node:24
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY . .
 
 RUN npm run build
 
-ENTRYPOINT ["npm", "run", "start"]
+EXPOSE 3000
+
+CMD ["npm", "run", "start:api"]

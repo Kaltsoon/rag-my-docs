@@ -1,12 +1,11 @@
 import inquirer from "inquirer";
 import { oraPromise } from "ora";
 import * as z from "zod";
-import { getRepository, RepositoryWithAuth } from "./githubApi";
+import { getRepository, RepositoryData } from "./githubApi";
+import { RepositoryIdentifierWithAuth } from "./types";
 import { updateRepositoryVectorStore } from "./vectorStore";
 import { invokeForRepository } from "./llm";
 import { RepositoryDocumentationLoader } from "./RepositoryDocumentationLoader";
-import { RepositoryIdentifier, Repository } from "./types";
-import { Document } from "@langchain/core/documents";
 
 function parseRepositoryUrl(url: string) {
   const parts = url.split("/").filter((part) => !!part);
@@ -39,13 +38,13 @@ const REPOSITORY_INFO_PROMPTS = [
     name: "ref",
     type: "input",
     message:
-      "The name of the commit/branch/tag. Defaults to repository's default branch",
+      "The name of the commit/branch/tag. Leave empty to default to the repository's default branch",
   },
   {
     name: "auth",
     type: "input",
     message:
-      "Authentication token. Only required while accessing non-public resources",
+      "GitHub authentication token. Only required while accessing non-public resources",
   },
 ] as const;
 
@@ -53,7 +52,7 @@ const QUESTION_PROMPTS = [
   {
     name: "question",
     type: "input",
-    message: "What would you want to know about the repository?",
+    message: "What would you like to know about the repository?",
   },
 ] as const;
 
@@ -68,6 +67,10 @@ const QuestionAnswersSchema = z.object({
 });
 
 export async function runCli() {
+  console.log(
+    "👋 Welcome to the RAG My Docs CLI application!\n\nLet's get started by asking a few questions about the repository you are interested in.\n"
+  );
+
   const answers = await inquirer.prompt(REPOSITORY_INFO_PROMPTS);
   const repositoryInfo = RepositoryInfoAnswersSchema.parse(answers);
 
@@ -86,18 +89,18 @@ export async function runCli() {
 
   const documents = await oraPromise(
     () => loadDocuments(repositoryWithAuth),
-    "Retrieving repository documenation"
+    "Retrieving repository documentation"
   );
 
   await oraPromise(
     () => updateRepositoryVectorStore(repositoryWithAuth, documents),
-    "Building vector database"
+    "Updating the vector database"
   );
 
   runQuestionLoop(repositoryData);
 }
 
-async function runQuestionLoop(repositoryData: Repository) {
+async function runQuestionLoop(repositoryData: RepositoryData) {
   while (true) {
     const answers = await inquirer.prompt(QUESTION_PROMPTS);
     const { question } = QuestionAnswersSchema.parse(answers);
@@ -111,8 +114,7 @@ async function runQuestionLoop(repositoryData: Repository) {
   }
 }
 
-async function loadDocuments(repository: RepositoryWithAuth) {
+async function loadDocuments(repository: RepositoryIdentifierWithAuth) {
   const loader = new RepositoryDocumentationLoader(repository);
   return loader.load();
 }
-

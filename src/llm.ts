@@ -1,9 +1,9 @@
 import { Ollama } from "@langchain/ollama";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { repositorySimilaritySearch } from "./vectorStore";
-import { Repository } from "./types";
 import { env } from "./env";
 import { Document } from "@langchain/core/documents";
+import { RepositoryData } from "./githubApi";
 
 const llm = new Ollama({
   model: env.OLLAMA_MODEL,
@@ -14,15 +14,15 @@ const PROMPT_TEMPLATE = ChatPromptTemplate.fromMessages([
   [
     "system",
     `
-  You are an assistant for answering questions about the following GitHub repository:
-  
-  {repositoryInfo}
-  
-  Use the following Markdown documentation files in the repository and general repository information to answer the question.
-  Each file contains the file path and its contents in Markdown format.
-  Do not use any information outside the documentation file contents and the general repository information provided.
-  Do not use Markdown formatting in your answers.
+  You are an assistant for answering questions about the GitHub repository {repositoryName}.
+  Use the following Markdown documentation files retrieved from the the repository and general repository information to answer the question.
+  Each documentation file contains the file path and its contents in Markdown format.
+  You can use your general knowledge about Git and GitHub but otherwise do not use any information outside the documentation file contents and the general repository information provided.
   If you don't know the answer, just say that you don't know.
+
+  General repository information in JSON format:
+  
+  {repositoryData}
 
   Documentation files:
   {documentationFiles}
@@ -32,7 +32,7 @@ const PROMPT_TEMPLATE = ChatPromptTemplate.fromMessages([
 ]);
 
 export async function invokeForRepository(
-  repository: Repository,
+  repository: RepositoryData,
   question: string
 ) {
   const matchingDocuments = await repositorySimilaritySearch(
@@ -43,21 +43,12 @@ export async function invokeForRepository(
 
   return llm.invoke(
     await PROMPT_TEMPLATE.invoke({
+      repositoryName: repository.name,
       documentationFiles: documentsToContext(matchingDocuments),
-      repositoryInfo: repositoryDataToRepositoryInfo(repository),
+      repositoryData: JSON.stringify(repository),
       question,
     })
   );
-}
-
-function repositoryDataToRepositoryInfo(repository: Repository) {
-  return `
-  Name: ${repository.name}
-  Owner: ${repository.owner.login}
-  Description: ${repository.description}
-  License: ${repository.license.name}
-  URL: ${repository.htmlUrl}
-  `;
 }
 
 function documentsToContext(documents: Document[]) {

@@ -8,13 +8,8 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { Document } from "@langchain/core/documents";
 import getUuidByString from "uuid-by-string";
 
-import {
-  RepositoryIdentifierWithDocumentation,
-  DocumentationFile,
-  RepositoryIdentifier,
-} from "./types";
-
-import { getRepositoryContentZip, RepositoryWithAuth } from "./githubApi";
+import { DocumentationFile, RepositoryIdentifier, RepositoryIdentifierWithAuth } from "./types";
+import { getRepositoryContentZip } from "./githubApi";
 
 const textSplitter = RecursiveCharacterTextSplitter.fromLanguage("markdown", {
   chunkSize: 2000,
@@ -27,32 +22,37 @@ const cache = new LRUCache<string, Document[]>({
 });
 
 export class RepositoryDocumentationLoader {
-  #repository: RepositoryWithAuth;
+  #repository: RepositoryIdentifierWithAuth;
 
-  constructor(repository: RepositoryWithAuth) {
+  constructor(repository: RepositoryIdentifierWithAuth) {
     this.#repository = repository;
   }
 
   async load() {
-    const cacheKey = `${this.#repository.owner}/${this.#repository.repo}/${
-      this.#repository.ref ?? ""
-    }`;
+    const cacheKey = this.#getCacheKey();
 
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey)!;
     }
 
-    const repositoryWithDocumentation = await fetchRepositoryDocumentation(
+    const documentationFiles = await fetchRepositoryDocumentation(
       this.#repository
     );
 
     const documents = await getDocumentsFromRepository(
-      repositoryWithDocumentation
+      this.#repository,
+      documentationFiles
     );
 
     cache.set(cacheKey, documents);
 
     return documents;
+  }
+
+  #getCacheKey() {
+    return `${this.#repository.owner}/${this.#repository.repo}/${
+      this.#repository.ref ?? ""
+    }`;
   }
 }
 
@@ -67,7 +67,7 @@ function getTempRepositoryFolderName(owner: string, repo: string) {
 }
 
 export async function fetchRepositoryDocumentation(
-  repository: RepositoryWithAuth
+  repository: RepositoryIdentifierWithAuth
 ) {
   const { owner, repo, ref } = repository;
 
@@ -78,28 +78,21 @@ export async function fetchRepositoryDocumentation(
   const path = pathResolve(__dirname, "...", `data/${tempFolderName}`);
   zip.extractAllTo(path, true);
 
-  const fileContents: DocumentationFile[] = [];
+  const documentationFiles: DocumentationFile[] = [];
 
   for (const filePath of await glob(`${path}/**/*.md`)) {
     const repositoryFilePath = getRepositoryFilePath(filePath);
     const content = await readFile(filePath, "utf-8");
 
-    fileContents.push({
+    documentationFiles.push({
       path: repositoryFilePath,
       content,
     });
   }
 
-  const repositoryWithDocumentation = {
-    owner,
-    repo,
-    ref,
-    documentationFiles: fileContents,
-  };
-
   await rm(path, { recursive: true, force: true });
 
-  return repositoryWithDocumentation;
+  return documentationFiles;
 }
 
 function getPageContentFromDocumentationFile(
@@ -115,21 +108,20 @@ function getDocumentationFileId(
   splitIndex: number
 ) {
   const contentHash = objectHash({
-      repositoryName: repository.repo,
-      repositoryOwner: repository.owner,
-      path: file.path,
-      content: file.content,
-      splitIndex,
-    });
+    repositoryName: repository.repo,
+    repositoryOwner: repository.owner,
+    path: file.path,
+    content: file.content,
+    splitIndex,
+  });
 
   return getUuidByString(contentHash);
 }
 
 async function getDocumentsFromRepository(
-  repository: RepositoryIdentifierWithDocumentation
+  repository: RepositoryIdentifier,
+  documentationFiles: DocumentationFile[]
 ) {
-  const { documentationFiles } = repository;
-
   let documents: Document[] = [];
 
   for (const file of documentationFiles) {

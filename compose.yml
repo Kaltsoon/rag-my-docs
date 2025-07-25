@@ -1,9 +1,11 @@
 services:
-  cli:
+  app:
     build:
       context: ./
     env_file: .env
-    container_name: rag-my-docs-cli
+    container_name: rag-my-docs-app
+    ports:
+      - 3000:3000
   redis:
     image: redis/redis-stack-server
     volumes:
@@ -20,5 +22,4 @@ services:
     container_name: rag-my-docs-postgres
 volumes:
   redis_data:
-  ollama_data:
   pg_data:
