@@ -22,7 +22,7 @@ Docker and [Ollama](https://ollama.com/).
 
 ### REST API
 
-REST API endpoint `POST http://localhost:3000/api/repos/{owner}/{repo}/prompt` (e.g. <http://localhost:3000/api/repos/Kaltsoon/rag-my-docs>) accepts a request body in the following format:
+REST API endpoint `POST http://localhost:3000/api/repos/{owner}/{repo}/prompt` (e.g. <http://localhost:3000/api/repos/Kaltsoon/rag-my-docs/prompt>) accepts a request body in the following format:
 
 ```json
 {
@@ -39,7 +39,7 @@ The response contains the answer from the LLM.
 Here's an example request using `curl`:
 
 ```bash
-curl -X POST http://http://localhost:3000/api/repos/Kaltsoon/rag-my-docs \
+curl -X POST http://http://localhost:3000/api/repos/Kaltsoon/rag-my-docs/prompt \
   -H "Content-Type: application/json" \
   -d '{"question":"What is the purpose of the repository?"}'
 ```
@@ -55,3 +55,7 @@ You can run the CLI application by running `docker compose exec -it app npm run 
 ### Debugging
 
 Setting `LOGGER_LEVEL=debug` in the `.env` file will enable logging and provide information on, for example, cache performance.
+
+## License
+
+[MIT](./LICENSE)
